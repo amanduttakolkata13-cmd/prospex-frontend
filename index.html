@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Prospex ML</title>
-  <link rel="manifest" href="/manifest.json">
+  <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#060c18">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=JetBrains+Mono&display=swap" rel="stylesheet">
@@ -390,7 +390,8 @@
     function renderResults(data) {
       results.sort(function(a, b) { return b.acc - a.acc; });
       var best = results[0];
-      var target = document.getElementById('targetSelect').value;
+      var target = document.getElementById('targetSelect').value.trim();
+      if(!target){ alert('Please select target'); return; }
       var totalTime = results.reduce(function(sum, r) { return sum + r.time; }, 0).toFixed(2);
 
       var sr = document.getElementById('statRow');
