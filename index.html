@@ -673,7 +673,7 @@ input[type="file"] { display: none; }
     <div class="tbl-wrap">
       <table>
         <thead>
-          <tr><th>Model</th><th>Accuracy</th><th>Precision</th><th>Recall</th><th>F1</th><th>Time</th></tr>
+          <tr><th>Model</th><th>acc</th><th>Precision</th><th>Recall</th><th>F1</th><th>Time</th></tr>
         </thead>
         <tbody id="resultsTbody"></tbody>
       </table>
@@ -688,7 +688,7 @@ input[type="file"] { display: none; }
     </div>
     <div class="chart-duo">
       <div class="chart-box">
-        <div class="chart-lbl">Model accuracy</div>
+        <div class="chart-lbl">Model acc</div>
         <canvas id="cPerf" class="ch"></canvas>
       </div>
       <div class="chart-box">
@@ -702,7 +702,7 @@ input[type="file"] { display: none; }
         <canvas id="cFeat" class="ch"></canvas>
       </div>
       <div class="chart-box">
-        <div class="chart-lbl">Accuracy distribution</div>
+        <div class="chart-lbl">acc distribution</div>
         <canvas id="cHist" class="ch"></canvas>
       </div>
     </div>
@@ -769,7 +769,7 @@ input[type="file"] { display: none; }
   function exportCSV(){
     if(!results.length){toast('No results yet','warn');return;}
     var csv=Papa.unparse({
-      fields:['Model','Accuracy','Precision','Recall','F1','Time(s)'],
+      fields:['Model','acc','Precision','Recall','F1','Time(s)'],
       data:results.map(function(r){
         return [r.name,(r.acc*100).toFixed(2),(r.precision*100).toFixed(2),(r.recall*100).toFixed(2),(r.f1*100).toFixed(2),r.time];
       })
@@ -827,6 +827,7 @@ function processFile(file){
   if(busy) return;
   if(!file.name.toLowerCase().endsWith('.csv')){toast('CSV files only','warn');return;}
   if(file.size>50*1024*1024){toast('File exceeds 50 MB','warn');return;}
+  uploadedFile = file;
   busy=true; setPill('loading\u2026');
   var reader=new FileReader();
   reader.onload=function(ev){
@@ -866,6 +867,7 @@ function loadSample(){
     header:true, dynamicTyping:true, skipEmptyLines:true,
     complete:function(res){
       rawData=res.data; columns=res.meta.fields;
+      uploadedFile = new File([SAMPLE], 'sample_loan.csv', {type: 'text/csv'});
       onLoaded('sample_loan.csv');
       setTimeout(function(){
         document.getElementById('targetSelect').value='approved';
@@ -915,6 +917,10 @@ async function runTraining() {
   });
   if (!feats.length) {
     toast('Select at least one feature', 'warn');
+    return;
+  }
+  if (!uploadedFile) {
+    toast('Please upload a file first', 'warn');
     return;
   }
 
@@ -1000,8 +1006,8 @@ function log(msg,cls){
 
 /* ── RESULTS ─────────────────────────────── */
 function renderResults(totalTime, data) {
-  // Sort results by accuracy
-  results.sort(function(a, b) { return b.accuracy - a.accuracy; });
+  // Sort results by acc
+  results.sort(function(a, b) { return b.acc - a.acc; });
   var best = results[0];
   var target = document.getElementById('targetSelect').value;
 
@@ -1010,7 +1016,7 @@ function renderResults(totalTime, data) {
   sr.innerHTML = '';
   [
     { v: results.length, k: 'models' },
-    { v: (best.accuracy * 100).toFixed(1) + '%', k: 'best acc' },
+    { v: (best.acc * 100).toFixed(1) + '%', k: 'best acc' },
     { v: totalTime + 's', k: 'total time' },
     { v: data.rows.toLocaleString(), k: 'rows' }
   ].forEach(function(s, i) {
@@ -1028,7 +1034,7 @@ function renderResults(totalTime, data) {
     '<div class="best-desc">Real scikit-learn model trained on ' + data.rows + ' rows. Predicting <em>' + target + '</em>.</div>' +
     '<div class="best-metrics">' +
     [
-      ['accuracy', (best.accuracy * 100).toFixed(1) + '%'],
+      ['acc', (best.acc * 100).toFixed(1) + '%'],
       ['precision', (best.precision * 100).toFixed(1) + '%'],
       ['recall', (best.recall * 100).toFixed(1) + '%'],
       ['f1', (best.f1 * 100).toFixed(1) + '%'],
@@ -1043,10 +1049,10 @@ function renderResults(totalTime, data) {
   results.forEach(function(r, i) {
     var tr = document.createElement('tr');
     if (i === 0) tr.className = 'best-tr';
-    var w = ((r.accuracy - 0.6) / 0.4 * 100).toFixed(1);
+    var w = ((r.acc - 0.6) / 0.4 * 100).toFixed(1);
     tr.innerHTML =
       '<td class="col-name">' + r.name + '</td>' +
-      '<td><div class="bar-cell"><span>' + (r.accuracy * 100).toFixed(1) + '%</span>' +
+      '<td><div class="bar-cell"><span>' + (r.acc * 100).toFixed(1) + '%</span>' +
       '<div class="bar-track"><div class="bar-fill" style="width:' + w + '%"></div></div></div></td>' +
       '<td>' + (r.precision * 100).toFixed(1) + '%</td>' +
       '<td>' + (r.recall * 100).toFixed(1) + '%</td>' +
@@ -1229,7 +1235,7 @@ function destroyCharts(){
 function exportCSV(){
   if(!results.length){toast('No results yet','warn');return;}
   var csv=Papa.unparse({
-    fields:['Model','Accuracy','Precision','Recall','F1','Time(s)'],
+    fields:['Model','acc','Precision','Recall','F1','Time(s)'],
     data:results.map(function(r){
       return [r.name,(r.acc*100).toFixed(2),(r.precision*100).toFixed(2),(r.recall*100).toFixed(2),(r.f1*100).toFixed(2),r.time];
     })
@@ -1259,7 +1265,7 @@ function exportReport(){
     '\n\nMODEL RESULTS\n'+
     results.map(function(r,i){return '  '+(i+1)+'. '+r.name.padEnd(24)+' acc='+(r.acc*100).toFixed(2)+'%  t='+r.time+'s';}).join('\n')+
     '\n\nBEST MODEL: '+best.name+
-    '\n  Accuracy:  '+(best.acc*100).toFixed(2)+'%'+
+    '\n  acc:  '+(best.acc*100).toFixed(2)+'%'+
     '\n  Precision: '+(best.precision*100).toFixed(2)+'%'+
     '\n  Recall:    '+(best.recall*100).toFixed(2)+'%'+
     '\n  F1 Score:  '+(best.f1*100).toFixed(2)+'%'+
