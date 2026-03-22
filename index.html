@@ -749,20 +749,34 @@ input[type="file"] { display: none; }
 <div id="_toast"></div>
 
 <script>
-/* ── STATE ─────────────────────────────── */
-const API = 'http://127.0.0.1:8000'; // For local testing
-// const API = 'https://your-backend-url.onrender.com'; // For production
+  /* ── API CONFIG ───────────────────────── */
+  const API = window.location.hostname === 'localhost' 
+    ? 'http://localhost:8000' 
+    : 'https://prospex-ml-api.onrender.com'; // 🔹 REPLACE with your actual Render URL
 
-let rawData=[], columns=[], results=[], history=[], charts={}, busy=false;
+  /* ── STATE ─────────────────────────────── */
+  let rawData=[], columns=[], results=[], history=[], charts={}, busy=false;
+  const MODELS=[
+    {name:'Random Forest'},
+    {name:'Gradient Boosting'},
+    {name:'Neural Network'},
+    {name:'Linear Model'},
+    {name:'KNN'},
+    {name:'SVM'}
+  ];
 
-const MODELS=[
-  {name:'Random Forest'},
-  {name:'Gradient Boosting'},
-  {name:'Neural Network'},
-  {name:'Linear Model'},
-  {name:'K-Nearest Neighbors'},
-  {name:'Support Vector'},
-];
+  /* ── YOUR EXISTING FUNCTIONS BELOW ─────── */
+  function exportCSV(){
+    if(!results.length){toast('No results yet','warn');return;}
+    var csv=Papa.unparse({
+      fields:['Model','Accuracy','Precision','Recall','F1','Time(s)'],
+      data:results.map(function(r){
+        return [r.name,(r.acc*100).toFixed(2),(r.precision*100).toFixed(2),(r.recall*100).toFixed(2),(r.f1*100).toFixed(2),r.time];
+      })
+    });
+    dl(new Blob([csv],{type:'text/csv'}),'results_'+Date.now()+'.csv');
+    toast('results.csv downloaded');
+  }
 
 const SAMPLE=`age,income,education,experience,credit_score,loan_amount,approved
 25,45000,12,3,650,15000,1
@@ -1297,6 +1311,7 @@ function toast(msg,type){
   clearTimeout(_toastT);
   _toastT=setTimeout(function(){t.style.opacity='0'; setTimeout(function(){t.style.display='none';},300);},2800);
 }
+  
 </script>
 </body>
 </html>
