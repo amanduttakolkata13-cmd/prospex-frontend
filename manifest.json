@@ -1,0 +1,11 @@
+{
+  "name": "prospex ml",
+  "short_name": "prospex",
+  "description": "Train real ML models on your data",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#060c18",
+  "theme_color": "#060c18",
+  "orientation": "portrait-primary"
+  
+}
